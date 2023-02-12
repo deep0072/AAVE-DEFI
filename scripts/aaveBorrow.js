@@ -61,6 +61,23 @@ async function main() {
   const daiTokenAddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
   await borrowDai(daiTokenAddress, borrowableDaiWei, lendingPool, deployer);
   await getBorrowUserData(lendingPool, deployer);
+
+  // now its time to repay borrowed amount
+  await repay(borrowableDaiWei, daiTokenAddress, lendingPool, deployer);
+
+  //after repaid again check userData
+  await getBorrowUserData(lendingPool, deployer);
+}
+
+// repay dai
+
+async function repay(amount, daiAddress, lendingPool, account) {
+  // first need approval for repay
+  await erc20Approval(daiAddress, lendingPool.address, amount, account);
+
+  const repayTx = await lendingPool.repay(daiAddress, amount, 1, account);
+  await repayTx.wait(1);
+  console.log("amount repaid");
 }
 
 // borrow Dai
@@ -76,7 +93,7 @@ async function borrowDai(
     borrowedAmount,
     1,
     0,
-    deployer
+    account
   );
   await borrowTx.wait(1);
   console.log("dai token borrowed");
