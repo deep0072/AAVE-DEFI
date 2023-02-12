@@ -49,12 +49,37 @@ async function main() {
 
   const daiPricePerEth = await getPrice();
 
-  //2. now calculate the dai per borrowableeth
+  //2. now calculate the dai per availableBorrowsETH
 
   const borrowableDai =
     availableBorrowsETH.toString() * 0.95 * (1 / daiPricePerEth.toNumber());
 
   console.log(borrowableDai, "borrowableDai");
+  const borrowableDaiWei = ethers.utils.parseEther(borrowableDai.toString());
+
+  // 3/ its time to borrow Dai
+  const daiTokenAddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+  await borrowDai(daiTokenAddress, borrowableDaiWei, lendingPool, deployer);
+  await getBorrowUserData(lendingPool, deployer);
+}
+
+// borrow Dai
+
+async function borrowDai(
+  daiTokenAddress,
+  borrowedAmount,
+  lendingPool,
+  account
+) {
+  const borrowTx = await lendingPool.borrow(
+    daiTokenAddress,
+    borrowedAmount,
+    1,
+    0,
+    deployer
+  );
+  await borrowTx.wait(1);
+  console.log("dai token borrowed");
 }
 
 // get daiPriceperEth
