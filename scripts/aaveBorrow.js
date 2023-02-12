@@ -28,8 +28,8 @@ async function main() {
   );
 
   //deposit
-
   await lendingPool.deposit(wrapEthTokenAddress, AMOUNT, deployer, 0);
+  console.log("deposited");
 
   // now time to borrow
   /*
@@ -38,6 +38,49 @@ async function main() {
   
   
   */
+
+  const { totalDebtETH, availableBorrowsETH } = await getBorrowUserData(
+    lendingPool,
+    deployer
+  );
+
+  // now we need to borrow dai against the available BorrowsEth
+  //1. first get dai price per eth
+
+  const daiPricePerEth = await getPrice();
+
+  //2. now calculate the dai per borrowableeth
+
+  const borrowableDai =
+    availableBorrowsETH.toString() * 0.95 * (1 / daiPricePerEth.toNumber());
+
+  console.log(borrowableDai, "borrowableDai");
+}
+
+// get daiPriceperEth
+
+async function getPrice() {
+  const priceFeedAddress = "0x773616e4d11a78f511299002da57a0a94577f1f4";
+  const priceFeed = await ethers.getContractAt(
+    "AggregatorV3Interface",
+    priceFeedAddress
+  );
+
+  const daiAmount = (await priceFeed.latestRoundData())[1];
+  return daiAmount;
+}
+
+// getUserData
+
+async function getBorrowUserData(lendingPool, account) {
+  const { totalCollateralETH, totalDebtETH, availableBorrowsETH } =
+    await lendingPool.getUserAccountData(account);
+
+  console.log(
+    `: totalCollateralETH : ${totalCollateralETH}, totalDebtETH: ${totalDebtETH},availableBorrowsETH: ${availableBorrowsETH} `
+  );
+
+  return { totalDebtETH, availableBorrowsETH };
 }
 
 // approval
